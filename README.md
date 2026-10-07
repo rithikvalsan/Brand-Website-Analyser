@@ -1,4 +1,4 @@
-Brand Website Analyser
+**Brand Website Analyser**
 
 A Chrome extension that gives you a quick read on any Shopify store: average selling price, catalog size, price range, category mix and a "Brand DNA" classification. Open the popup on a store and the numbers appear in a few seconds.
 
