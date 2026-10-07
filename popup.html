@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopify Brand Intel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a3a;
+      --accent: #7c6af7;
+      --accent2: #4ecdc4;
+      --accent3: #ff6b6b;
+      --text: #f0f0f8;
+      --muted: #6b6b85;
+      --green: #56d67e;
+      --gold: #f5c842;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 360px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    .header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+    }
+    .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 800;
+      color: var(--text); letter-spacing: 0.02em; line-height: 1;
+    }
+    .header-text p { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    .scan-btn {
+      margin-left: auto;
+      background: var(--accent); color: white; border: none;
+      border-radius: 6px; padding: 6px 12px;
+      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
+    }
+    .scan-btn:hover { background: #6a58e8; transform: translateY(-1px); }
+    .scan-btn:active { transform: translateY(0); }
+    .scan-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .state { display: none; padding: 28px 18px; text-align: center; }
+    .state.active { display: block; }
+    .state-idle .idle-icon { font-size: 32px; margin-bottom: 10px; }
+    .state-idle p { font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .state-not-shopify .ns-icon { font-size: 28px; margin-bottom: 10px; }
+    .state-not-shopify p { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+    .state-loading { padding: 24px 18px; }
+    .loading-label {
+      font-size: 10px; color: var(--muted); text-align: center;
+      margin-bottom: 14px; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .progress-track { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      animation: loading 1.6s ease-in-out infinite;
+    }
+    @keyframes loading {
+      0% { width: 0%; margin-left: 0; }
+      50% { width: 70%; margin-left: 15%; }
+      100% { width: 0%; margin-left: 100%; }
+    }
+    .loading-pages { font-size: 10px; color: var(--muted); text-align: center; margin-top: 10px; }
+
+    .state-results { padding: 0; text-align: left; }
+
+    .store-name {
+      padding: 12px 18px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .store-name .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .store-name .name {
+      font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--text); white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 320px;
+    }
+
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .metric {
+      padding: 14px 14px 12px; border-right: 1px solid var(--border);
+      animation: fadeUp 0.3s ease forwards; opacity: 0;
+    }
+    .metric:last-child { border-right: none; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .metric:nth-child(1) { animation-delay: 0.05s; }
+    .metric:nth-child(2) { animation-delay: 0.12s; }
+    .metric:nth-child(3) { animation-delay: 0.19s; }
+    .metric .m-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+    .metric .m-value { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+    .metric .m-value.asp { color: var(--accent2); }
+    .metric .m-value.count { color: var(--accent); }
+    .metric .m-sub { font-size: 9px; color: var(--muted); margin-top: 3px; }
+
+    .price-range {
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pr-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; flex-shrink: 0; }
+    .pr-track { flex: 1; height: 4px; background: var(--border); border-radius: 99px; position: relative; }
+    .pr-fill { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius: 99px; width: 100%; }
+    .pr-values { display: flex; gap: 6px; font-size: 10px; }
+    .pr-min { color: var(--green); }
+    .pr-sep { color: var(--muted); }
+    .pr-max { color: var(--accent); }
+
+    .categories { padding: 12px 18px 14px; border-bottom: 1px solid var(--border); }
+    .cat-header { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .cat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; animation: fadeUp 0.3s ease forwards; opacity: 0; }
+    .cat-name { font-size: 10px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 110px; flex-shrink: 0; }
+    .cat-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .cat-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+    .cat-count { font-size: 10px; color: var(--muted); width: 28px; text-align: right; flex-shrink: 0; }
+
+    /* ── Brand DNA ── */
+    .brand-dna { padding: 14px 18px 16px; }
+    .dna-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .dna-title {
+      font-size: 9px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .dna-confidence {
+      font-size: 9px; padding: 2px 7px;
+      border-radius: 99px; font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+    .dna-confidence.high { background: rgba(86,214,126,0.15); color: var(--green); }
+    .dna-confidence.medium { background: rgba(245,200,66,0.15); color: var(--gold); }
+    .dna-confidence.low { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+    .dna-loading {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; color: var(--muted); padding: 6px 0;
+    }
+    .dna-spinner {
+      width: 12px; height: 12px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .dna-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .dna-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+      animation: fadeUp 0.3s ease forwards; opacity: 0;
+    }
+    .dna-card-label { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+    .dna-card-value {
+      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+      color: var(--text); line-height: 1.2; margin-bottom: 5px;
+    }
+
+    /* Editable select */
+    .dna-select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text); font-family: 'DM Mono', monospace;
+      font-size: 9px; padding: 3px 5px; cursor: pointer;
+      appearance: none; outline: none;
+    }
+    .dna-select:focus { border-color: var(--accent); }
+    .dna-select option { background: var(--bg); }
+
+    /* Price positioning pill — spans full width */
+    .price-pos-row {
+      margin-top: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      animation: fadeUp 0.3s ease forwards; opacity: 0;
+      animation-delay: 0.3s;
+    }
+    .price-pos-label { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .price-pos-pills { display: flex; gap: 5px; }
+    .price-pill {
+      font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
+      padding: 3px 9px; border-radius: 99px; border: 1px solid var(--border);
+      color: var(--muted); transition: all 0.2s;
+    }
+    .price-pill.active-budget { background: rgba(86,214,126,0.15); color: var(--green); border-color: var(--green); }
+    .price-pill.active-mid { background: rgba(78,205,196,0.15); color: var(--accent2); border-color: var(--accent2); }
+    .price-pill.active-premium { background: rgba(124,106,247,0.15); color: var(--accent); border-color: var(--accent); }
+    .price-pill.active-luxury { background: rgba(245,200,66,0.15); color: var(--gold); border-color: var(--gold); }
+
+    /* ── Category Focus (standalone section) ── */
+    .cat-focus-section {
+      padding: 11px 18px 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .cat-focus-header {
+      font-size: 9px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      flex-shrink: 0;
+    }
+    .cat-focus-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+    .focus-pill {
+      font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
+      padding: 3px 10px; border-radius: 99px; border: 1px solid var(--border);
+      color: var(--muted); transition: all 0.2s;
+    }
+    .focus-pill.active-apparel    { background: rgba(124,106,247,0.18); color: var(--accent);  border-color: var(--accent); }
+    .focus-pill.active-footwear   { background: rgba(78,205,196,0.18);  color: var(--accent2); border-color: var(--accent2); }
+    .focus-pill.active-accessories{ background: rgba(245,200,66,0.18);  color: var(--gold);    border-color: var(--gold); }
+    .focus-pill.active-lifestyle  { background: rgba(255,107,107,0.18); color: var(--accent3); border-color: var(--accent3); }
+
+    .footer {
+      padding: 8px 18px; border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-note { font-size: 9px; color: var(--muted); }
+    .rescan {
+      font-size: 9px; color: var(--accent); cursor: pointer;
+      text-decoration: underline; background: none; border: none;
+      font-family: 'DM Mono', monospace;
+    }
+    .rescan:hover { color: var(--accent2); }
+
+    .error-msg { padding: 20px 18px; font-size: 11px; color: var(--accent3); line-height: 1.6; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">◈</div>
+  <div class="header-text">
+    <h1>BRAND INTEL</h1>
+    <p>Shopify store analyzer</p>
+  </div>
+  <button class="scan-btn" id="scanBtn">Scan</button>
+</div>
+
+<div class="state state-idle active" id="stateIdle">
+  <div class="idle-icon">🔍</div>
+  <p>Navigate to any Shopify store<br>then click <strong>Scan</strong> to analyze it.</p>
+</div>
+
+<div class="state state-not-shopify" id="stateNotShopify">
+  <div class="ns-icon">⚠️</div>
+  <p>This doesn't appear to be a Shopify store.<br>Try navigating to a Shopify-powered site.</p>
+</div>
+
+<div class="state state-loading" id="stateLoading">
+  <div class="loading-label" id="loadingLabel">Fetching catalog…</div>
+  <div class="progress-track"><div class="progress-bar"></div></div>
+  <div class="loading-pages" id="loadingPages">Scanning products…</div>
+</div>
+
+<div class="state" id="stateError">
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<div class="state state-results" id="stateResults">
+  <div class="store-name">
+    <div class="label">Store</div>
+    <div class="name" id="storeName">—</div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric">
+      <div class="m-label">ASP</div>
+      <div class="m-value asp" id="aspValue">—</div>
+      <div class="m-sub" id="aspSub">per product</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Products</div>
+      <div class="m-value count" id="productCount">—</div>
+      <div class="m-sub">in catalog</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Categories</div>
+      <div class="m-value" id="categoryCount">—</div>
+      <div class="m-sub">product types</div>
+    </div>
+  </div>
+
+  <div class="price-range">
+    <div class="pr-label">Range</div>
+    <div class="pr-track"><div class="pr-fill"></div></div>
+    <div class="pr-values">
+      <span class="pr-min" id="prMin">—</span>
+      <span class="pr-sep">→</span>
+      <span class="pr-max" id="prMax">—</span>
+    </div>
+  </div>
+
+  <div class="categories">
+    <div class="cat-header">Category Breakdown</div>
+    <div id="catList"></div>
+  </div>
+
+  <!-- Category Focus -->
+  <div class="cat-focus-section">
+    <div class="cat-focus-header">Category Focus</div>
+    <div class="cat-focus-pills">
+      <div class="focus-pill" id="cfApparel">Apparel</div>
+      <div class="focus-pill" id="cfFootwear">Footwear</div>
+      <div class="focus-pill" id="cfAccessories">Accessories</div>
+      <div class="focus-pill" id="cfLifestyle">Lifestyle</div>
+    </div>
+  </div>
+
+  <!-- Brand DNA -->
+  <div class="brand-dna">
+    <div class="dna-header">
+      <div class="dna-title">🧬 Brand DNA</div>
+      <div class="dna-confidence" id="dnaConfidence"></div>
+    </div>
+
+    <div id="dnaLoading" class="dna-loading">
+      <div class="dna-spinner"></div>
+      <span>Analyzing brand identity…</span>
+    </div>
+
+    <div id="dnaContent" style="display:none">
+      <div class="dna-grid">
+        <div class="dna-card" style="animation-delay:0.05s">
+          <div class="dna-card-label">Core Type</div>
+          <div class="dna-card-value" id="dnaCoreValue">—</div>
+          <select class="dna-select" id="dnaCoreSelect">
+            <option>Pop Culture Graphic</option>
+            <option>Indie Streetwear</option>
+            <option>Mass Streetwear</option>
+            <option>Accessories / Culture</option>
+          </select>
+        </div>
+        <div class="dna-card" style="animation-delay:0.1s">
+          <div class="dna-card-label">Aesthetic</div>
+          <div class="dna-card-value" id="dnaAestheticValue">—</div>
+          <select class="dna-select" id="dnaAestheticSelect">
+            <option>Loud</option>
+            <option>Clean</option>
+            <option>Edgy</option>
+            <option>Experimental</option>
+          </select>
+        </div>
+        <div class="dna-card" style="animation-delay:0.15s">
+          <div class="dna-card-label">Graphic Intensity</div>
+          <div class="dna-card-value" id="dnaGraphicValue">—</div>
+          <select class="dna-select" id="dnaGraphicSelect">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="dna-card" style="animation-delay:0.2s">
+          <div class="dna-card-label">Product Focus</div>
+          <div class="dna-card-value" id="dnaFocusValue">—</div>
+          <select class="dna-select" id="dnaFocusSelect">
+            <option>Tees</option>
+            <option>Oversized Fits</option>
+            <option>Full Outfits</option>
+            <option>Accessories</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="price-pos-row">
+        <div class="price-pos-label">Price Positioning</div>
+        <div class="price-pos-pills">
+          <div class="price-pill" id="ppBudget">Budget</div>
+          <div class="price-pill" id="ppMid">Mid</div>
+          <div class="price-pill" id="ppPremium">Premium</div>
+          <div class="price-pill" id="ppLuxury">Luxury</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-note" id="scanTime"></span>
+    <button class="rescan" id="rescanBtn">↺ rescan</button>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
